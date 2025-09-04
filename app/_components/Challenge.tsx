@@ -37,7 +37,7 @@ function Challenge() {
     ];
 
     return (
-        <section className="py-10 bg-gradient-subtle">
+        <section className="py-10 bg-gradient-subtle " id="challenge">
             <div className="container mx-auto px-6">
                 {/* Section Header */}
                 <div className="text-center mb-8 mt-1">

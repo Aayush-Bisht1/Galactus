@@ -13,20 +13,20 @@ function Header() {
               <Train className="w-6 h-6 text-white" />
             </div>
             <div className="font-bold text-xl text-foreground">
-              KMRL Fleet Intelligence
+              KMRL SmartSched
             </div>
           </div>
 
           {/* Navigation - Desktop */}
           <nav className="hidden md:flex items-center gap-8">
+            <a href="#challenge" className="text-muted-foreground hover:text-foreground transition-colors">
+              Challenges
+            </a>
             <a href="#solution" className="text-muted-foreground hover:text-foreground transition-colors">
-              Solution
+              Solutions
             </a>
-            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
-              Features
-            </a>
-            <a href="#benefits" className="text-muted-foreground hover:text-foreground transition-colors">
-              Benefits
+            <a href="#feature" className="text-muted-foreground hover:text-foreground transition-colors">
+              features
             </a>
             <a href="#contact" className="text-muted-foreground hover:text-foreground transition-colors">
               Contact
@@ -36,7 +36,7 @@ function Header() {
           {/* CTA Button - Desktop */}
           <div className="hidden md:block">
             <Button variant="default">
-              Request Demo
+              Log in
             </Button>
           </div>
 

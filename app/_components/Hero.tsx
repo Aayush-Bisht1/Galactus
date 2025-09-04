@@ -1,6 +1,8 @@
 import { Button } from '@/components/ui/button'
 import React from 'react'
 import heroImage from '@/app/_assets/heroImage.png'
+import caricatureImage from '@/app/_assets/cartoon.png'
+import heroImage2 from '@/app/_assets/newHero.jpg'
 import Image from 'next/image'
 import { MoveLeft, MoveRight } from 'lucide-react'
 
@@ -10,7 +12,7 @@ function Hero() {
             {/* Background Image with Overlay */}
             <div className="absolute inset-0 z-0">
                 <Image
-                    src={heroImage}
+                    src={heroImage2}
                     alt="Modern metro train in station with digital scheduling displays"
                     className="w-full h-full object-cover"
                 />
@@ -22,14 +24,14 @@ function Hero() {
                 <div className="max-w-4xl mx-auto">
                     {/* Main Headline */}
                     <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-                        Intelligent Fleet
-                        <span className="block bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
+                        Intelligent Allocation <br />
+                        <span className=" bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
                             Management System
+                            
                         </span>
                     </h1>
-
                     {/* Subheading */}
-                    <p className="text-xl md:text-2xl mb-8 text-primary-foreground/90 leading-relaxed">
+                    <p className="text-xl md:text-2xl  mb-8 text-primary-foreground/90 leading-relaxed">
                         Transform KMRL's train scheduling from manual processes to intelligent,
                         data-driven decisions with our comprehensive fleet optimization platform
                     </p>
@@ -46,17 +48,17 @@ function Hero() {
                         </div>
                         <div className="text-center">
                             <div className="text-3xl md:text-4xl font-bold text-accent">6</div>
-                            <div className="text-sm uppercase tracking-wide">Critical Variables</div>
+                            <div className="text-sm uppercase tracking-wide">Critical Challenges</div>
                         </div>
                     </div>
 
                     {/* CTA Buttons */}
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Button variant="hero" size="lg" className="text-lg px-8 py-6">
-                            Schedule Demo
+                            Log in 
                         </Button>
                         <Button variant="outline-hero" size="lg" className="text-lg px-8 py-6">
-                            View Solution
+                            View Desciption
                         </Button>
                     </div>
                 </div>
