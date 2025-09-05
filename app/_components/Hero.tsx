@@ -12,7 +12,7 @@ function Hero() {
             {/* Background Image with Overlay */}
             <div className="absolute inset-0 z-0">
                 <Image
-                    src={heroImage2}
+                    src={heroImage}
                     alt="Modern metro train in station with digital scheduling displays"
                     className="w-full h-full object-cover"
                 />

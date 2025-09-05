@@ -13,7 +13,7 @@ function Header() {
               <Train className="w-6 h-6 text-white" />
             </div>
             <div className="font-bold text-xl text-foreground">
-              KMRL SmartSched
+              Metro Optima
             </div>
           </div>
 
