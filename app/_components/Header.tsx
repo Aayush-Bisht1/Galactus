@@ -1,51 +1,83 @@
+"use client"
 import { Button } from '@/components/ui/button'
-import { Menu, Train } from 'lucide-react'
-import React from 'react'
+import { Menu, Train, X } from 'lucide-react'
+import React, { useState } from 'react'
 
 function Header() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const navItems = [
+    { label: 'Home', href: '/' },
+    { label: 'Features', href: '#features' },
+    { label: 'Benefits', href: '#benefits' },
+    { label: 'Contact', href: '#contact' },
+  ];
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-      <div className="container mx-auto px-6">
-        <div className="flex items-center justify-between h-16">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200">
+      <nav className="max-w-7xl mx-auto px-6 py-4">
+        <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#0078B4] to-[#00A651] rounded-xl flex items-center justify-center">
               <Train className="w-6 h-6 text-white" />
             </div>
-            <div className="font-bold text-xl text-foreground">
-              Metro Optima
+            <div>
+              <h1 className="text-xl font-bold text-[#0B2A3F]">Metro Optima</h1>
+              <p className="text-xs text-[#0B2A3F]/60">Kochi Metro AI</p>
             </div>
           </div>
 
-          {/* Navigation - Desktop */}
-          <nav className="hidden md:flex items-center gap-8">
-            <a href="#challenge" className="text-muted-foreground hover:text-foreground transition-colors">
-              Challenges
-            </a>
-            <a href="#solution" className="text-muted-foreground hover:text-foreground transition-colors">
-              Solutions
-            </a>
-            <a href="#feature" className="text-muted-foreground hover:text-foreground transition-colors">
-              features
-            </a>
-            <a href="#contact" className="text-muted-foreground hover:text-foreground transition-colors">
-              Contact
-            </a>
-          </nav>
-
-          {/* CTA Button - Desktop */}
-          <div className="hidden md:block">
-            <Button variant="default">
-              Log in
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-8">
+            {navItems.map((item) => (
+              <a href={item.href} key={item.label}
+              >
+                <button
+                  className="text-[#0B2A3F]/80 hover:text-[#0078B4] transition-colors font-medium"
+                >
+                  {item.label}
+                </button>
+              </a>
+            ))}
+            <Button
+              className="flex items-center bg-gradient-to-r from-[#0078B4] to-[#00A651] text-white hover:opacity-90 rounded-xl px-6"
+            >
+              Log In
             </Button>
           </div>
 
           {/* Mobile Menu Button */}
-          <button className="md:hidden p-2">
-            <Menu className="w-6 h-6 text-foreground" />
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden p-2 text-[#0B2A3F]"
+          >
+            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
-      </div>
+
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <div className="md:hidden mt-4 pb-4 border-t border-gray-200 pt-4">
+            <div className="flex flex-col gap-4">
+              {navItems.map((item) => (
+                <a href={item.href} key={item.label}
+                >
+                  <button
+                    className="text-left text-[#0B2A3F]/80 hover:text-[#0078B4] transition-colors font-medium py-2"
+                  >
+                    {item.label}
+                  </button>
+                </a>
+              ))}
+              <Button
+                className="flex items-center bg-gradient-to-r from-[#0078B4] to-[#00A651] text-white hover:opacity-90 rounded-xl mt-2"
+              >
+                Log In
+              </Button>
+            </div>
+          </div>
+        )}
+      </nav>
     </header>
   )
 }

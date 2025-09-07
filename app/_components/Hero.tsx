@@ -1,75 +1,91 @@
 import { Button } from '@/components/ui/button'
 import React from 'react'
 import heroImage from '@/app/_assets/heroImage.png'
-import caricatureImage from '@/app/_assets/cartoon.png'
-import heroImage2 from '@/app/_assets/newHero.jpg'
 import Image from 'next/image'
-import { MoveLeft, MoveRight } from 'lucide-react'
+import { ArrowRight, Play } from 'lucide-react'
+import Link from 'next/link'
 
 function Hero() {
     return (
-        <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
             {/* Background Image with Overlay */}
-            <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0">
                 <Image
                     src={heroImage}
-                    alt="Modern metro train in station with digital scheduling displays"
+                    alt="Modern metro train station"
                     className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/70 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-[#0078B4]/95 via-[#0078B4]/90 to-[#00A651]/95"></div>
             </div>
 
-            {/* Content */}
-            <div className="relative z-10 container mx-auto px-6 text-center text-white">
-                <div className="max-w-4xl mx-auto">
-                    {/* Main Headline */}
-                    <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-                        Intelligent Allocation <br />
-                        <span className=" bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">
-                            Management System
-                            
-                        </span>
+            <div className="container mx-auto px-6 relative z-10">
+                <div className="max-w-4xl mx-auto text-center text-white">
+                    <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 mb-8">
+                        <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                        <span className="text-sm">Live on Kochi Metro</span>
+                    </div>
+
+                    <h1 className="text-5xl lg:text-7xl font-bold mb-8 leading-tight">
+                        AI-Powered
+                        <br />
+                        <span className="text-[#00FFD1]">Metro Scheduling</span>
                     </h1>
-                    {/* Subheading */}
-                    <p className="text-xl md:text-2xl  mb-8 text-primary-foreground/90 leading-relaxed">
-                        Transform KMRL's train scheduling from manual processes to intelligent,
-                        data-driven decisions with our comprehensive fleet optimization platform
+
+                    <p className="text-xl lg:text-2xl opacity-90 mb-4 max-w-3xl mx-auto">
+                        Reduce passenger wait times by 87% with intelligent train scheduling that adapts to real-time demand
                     </p>
 
-                    {/* Key Stats */}
-                    <div className="flex flex-wrap justify-center gap-8 mb-12">
-                        <div className="text-center">
-                            <div className="text-3xl md:text-4xl font-bold text-accent">99.5%</div>
-                            <div className="text-sm uppercase tracking-wide">Punctuality Target</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-3xl md:text-4xl flex items-center font-bold text-secondary">25<MoveRight/>40</div>
-                            <div className="text-sm uppercase tracking-wide">Fleet Growth</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-3xl md:text-4xl font-bold text-accent">6</div>
-                            <div className="text-sm uppercase tracking-wide">Critical Challenges</div>
-                        </div>
+                    <p className="text-lg opacity-75 mb-12 max-w-2xl mx-auto">
+                        Transform your metro operations with AI that predicts passenger patterns and optimizes schedules automatically
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-6 justify-center">
+                        <Link href='/login'>
+                        <Button
+                            size="lg"
+                            className="bg-white text-[#0078B4] hover:bg-gray-100 rounded-xl px-8 py-4 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 group"
+                        >
+                            Get Started Today
+                            <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                        </Link>
+                        <Button
+                            size="lg"
+                            variant="outline"
+                            className="border-2 border-white text-white bg-transparent hover:bg-white/10 rounded-xl px-8 py-4 text-lg font-medium group"
+                        >
+                            <Play className="mr-2 w-5 h-5" />
+                            See How It Works
+                        </Button>
                     </div>
 
-                    {/* CTA Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Button variant="hero" size="lg" className="text-lg px-8 py-6">
-                            Log in 
-                        </Button>
-                        <Button variant="outline-hero" size="lg" className="text-lg px-8 py-6">
-                            View Desciption
-                        </Button>
+                    {/* Trust Indicators */}
+                    <div className="mt-16 flex flex-wrap justify-center items-center gap-8 opacity-80">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                                <span className="text-lg">🚇</span>
+                            </div>
+                            <span className="text-sm">Kochi Metro Rail</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                                <span className="text-lg">⚡</span>
+                            </div>
+                            <span className="text-sm">Real-time Processing</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                                <span className="text-lg">🎯</span>
+                            </div>
+                            <span className="text-sm">95% Accuracy</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Scroll Indicator */}
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white animate-bounce">
-                <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
-                    <div className="w-1 h-3 bg-white/50 rounded-full mt-2 animate-pulse"></div>
-                </div>
-            </div>
+            {/* Decorative Elements */}
+            <div className="absolute top-20 left-10 w-32 h-32 bg-white/10 rounded-full blur-xl" />
+            <div className="absolute bottom-20 right-10 w-48 h-48 bg-white/5 rounded-full blur-2xl" />
         </section>
     )
 }
