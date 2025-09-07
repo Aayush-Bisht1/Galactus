@@ -1,7 +1,8 @@
-import { DollarSign, Leaf, TrendingUp, Users } from 'lucide-react';
+import { Check, DollarSign, Leaf, TrendingUp, Users, X } from 'lucide-react';
 import Image from 'next/image';
 import React from 'react'
 import demo from '@/app/_assets/demo.png'
+import crowd from '@/app/_assets/crowd.jpeg'
 
 function BenefitsSection() {
     const benefits = [
@@ -85,13 +86,13 @@ function BenefitsSection() {
               <div className="relative mb-6">
                 <div className="rounded-2xl overflow-hidden shadow-lg">
                   <Image
-                    src={demo}
+                    src={crowd}
                     alt="Crowded train before optimization"
                     className="w-full h-64 object-cover"
                   />
                 </div>
                 <div className="absolute -top-4 -right-4 bg-red-500 text-white rounded-full w-16 h-16 flex items-center justify-center font-bold shadow-lg">
-                  ❌
+                  <X/>
                 </div>
               </div>
               <h4 className="text-xl font-bold text-gray-900 mb-3">Before AI Scheduling</h4>
@@ -114,7 +115,7 @@ function BenefitsSection() {
                   />
                 </div>
                 <div className="absolute -top-4 -right-4 bg-green-500 text-white rounded-full w-16 h-16 flex items-center justify-center font-bold shadow-lg">
-                  ✅
+                  <Check/>
                 </div>
               </div>
               <h4 className="text-xl font-bold text-gray-900 mb-3">After AI Scheduling</h4>

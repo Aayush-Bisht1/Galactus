@@ -1,28 +1,28 @@
-import { Brain, Zap, BarChart3, Shield, Clock, Users } from 'lucide-react';
+import { Brain, Shield, Clock, Users, Database, BarChart } from 'lucide-react';
 import Image from 'next/image';
-import dash from '@/app/_assets/dashboard.jpg'
+import dashboard from '@/app/_assets/dashboard.jpg'
 
 export function FeaturesSection() {
   const features = [
     {
+      icon: Database,
+      title: "Real-Time Data Ingestion",
+      description: "Integrate data from diverse sources including train sensors, maintenance logs, and scheduling systems to provide a unified view of operations."
+    },
+    {
       icon: Brain,
-      title: 'Predictive AI Engine',
-      description: 'Advanced machine learning algorithms predict passenger demand patterns with 95% accuracy'
+      title: "Intelligent Optimization",
+      description: "Multi-objective algorithms balance service readiness, reliability, cost, and branding exposur"
     },
     {
-      icon: Zap,
-      title: 'Real-time Optimization',
-      description: 'Instantly adjusts train schedules based on live passenger data and external factors'
-    },
-    {
-      icon: BarChart3,
-      title: 'Smart Analytics',
-      description: 'Comprehensive dashboards provide actionable insights for operational decisions'
+      icon: BarChart,
+      title: "Predictive Analytics",
+      description: "Machine learning feedback loops improve forecast accuracy and decision quality over time"
     },
     {
       icon: Shield,
-      title: 'Reliable & Secure',
-      description: 'Enterprise-grade security with 99.9% uptime for critical metro operations'
+      title: "Compliance & Auditing",
+      description: "Generate auditable decisions with explainable reasoning and comprehensive conflict alerts"
     },
     {
       icon: Clock,
@@ -37,8 +37,8 @@ export function FeaturesSection() {
   ];
 
   return (
-    <section id='features' className="py-24 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-6">
+    <section id='features' className="pt-24 pb-20 bg-gray-50">
+      <div className="w-full mx-auto px-20">
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
             Intelligent Metro Management
@@ -70,18 +70,18 @@ export function FeaturesSection() {
           <div className="relative">
             <div className="rounded-3xl overflow-hidden shadow-2xl">
               <Image
-                src={dash}
+                src={dashboard}
                 alt="Metro control room technology"
-                className="w-full h-96 object-cover"
+                className="w-full h-full object-cover"
               />
             </div>
-            
+
             {/* Floating Stats */}
-            <div className="absolute -top-6 -left-6 bg-white rounded-2xl p-4 shadow-lg">
+            <div className="absolute -top-7 -left-12 bg-white rounded-2xl p-3 shadow-lg">
               <div className="text-2xl font-bold text-[#0078B4]">87%</div>
               <div className="text-sm text-gray-600">Wait Time Reduction</div>
             </div>
-            <div className="absolute -bottom-6 -right-6 bg-white rounded-2xl p-4 shadow-lg">
+            <div className="absolute -bottom-8 -right-10 bg-white rounded-2xl p-3 shadow-lg">
               <div className="text-2xl font-bold text-[#00A651]">₹18L+</div>
               <div className="text-sm text-gray-600">Monthly Savings</div>
             </div>
