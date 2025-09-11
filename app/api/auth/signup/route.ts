@@ -26,6 +26,10 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'User already exists' }, { status: 400 })
         }
 
+        if(data.password.length < 7){
+            return NextResponse.json({error: 'Password length should be atleast 7'},{status: 400});
+        }
+
         const saltRounds = 10;
         data.password = await bcrypt.hash(data.password, saltRounds);
 
