@@ -2,6 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import axios from 'axios';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react'
 import { toast } from 'sonner';
@@ -64,6 +65,7 @@ function LogIn() {
                 <Button className="w-full bg-blue-700 hover:bg-blue-800" onClick={handleSubmit}>
                     Login
                 </Button>
+                <p className='pt-4 text-red-500 flex items-center justify-center gap-3'>Not Registered yet ! <Link href={'/signup'}><Button className='bg-blue-500 hover:bg-blue-600'>SignUp</Button></Link></p>
             </div>
         </div>
     );
