@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import SimulationForm from "@/app/_components/dashboard/simulation/SimulationForm";
+import SimulationForm from "@/app/_components/Dashboard/Simulation/SimulationForm";
 import {
   Table,
   TableBody,

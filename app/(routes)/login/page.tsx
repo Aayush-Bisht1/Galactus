@@ -2,10 +2,12 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import axios from 'axios';
+import { useRouter } from 'next/navigation';
 import React, { useState } from 'react'
 import { toast } from 'sonner';
 
 function LogIn() {
+    const router = useRouter();
     const [data, setData] = useState({
         email: '',
         password: ''
@@ -28,6 +30,7 @@ function LogIn() {
 
             if (res.status === 201) {
                 toast.success("Login successful!");
+                router.push('/dashboard');
             }
         } catch (err: any) {
             const message = err.response?.data?.error || "Login failed!";

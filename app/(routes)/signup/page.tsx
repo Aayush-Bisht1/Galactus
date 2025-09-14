@@ -11,6 +11,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import axios from 'axios'
+import Link from 'next/link'
 
 function SignUp() {
     const [data, setData] = useState({
@@ -91,6 +92,8 @@ function SignUp() {
                 <Button className="w-full bg-blue-700 hover:bg-blue-800" onClick={handleSubmit}>
                     Sign Up
                 </Button>
+
+                <p className='pt-4 text-red-500 flex items-center justify-center gap-3'>Already Registered ! <Link href={'/login'}><Button className='bg-blue-500 hover:bg-blue-600'>LogIn</Button></Link></p>
             </div>
         </div>
     );
