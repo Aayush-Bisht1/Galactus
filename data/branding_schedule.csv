@@ -1,0 +1,9 @@
+contract_id,train_id,advertiser,start_date,end_date,required_exposure_hours_per_day,sla_priority
+AD_SET_011,SET_011,BrandB,2025-08-03,2025-12-08,6,medium
+AD_SET_013,SET_013,BrandC,2025-08-10,2026-02-03,8,low
+AD_SET_020,SET_020,BrandC,2025-07-07,2025-12-19,8,low
+AD_SET_017,SET_017,BrandD,2025-08-15,2026-02-09,10,medium
+AD_SET_014,SET_014,BrandC,2025-08-20,2026-01-04,8,medium
+AD_SET_021,SET_021,BrandB,2025-07-04,2025-11-30,8,low
+AD_SET_004,SET_004,BrandB,2025-08-18,2025-12-31,4,low
+AD_SET_009,SET_009,BrandA,2025-08-17,2025-10-01,4,medium
