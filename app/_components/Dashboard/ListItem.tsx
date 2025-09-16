@@ -7,7 +7,9 @@ import {  LucideProps,Home,
   BarChart2,
   Wrench,
   Brush,
-  Settings } from 'lucide-react';
+  Settings,
+  Upload
+ } from 'lucide-react';
 
  const iconMap: Record<string, React.ElementType> = {
   home: Home,
@@ -16,6 +18,7 @@ import {  LucideProps,Home,
   maintenance: Wrench,
   cleaning: Brush,
   admin: Settings,
+  upload: Upload,
 }
  interface ListItemprops {
     title:string;

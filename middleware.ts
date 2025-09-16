@@ -15,6 +15,7 @@ export default async function middleware(req: NextRequest) {
     const signature = new TextEncoder().encode(process.env.JWT_SECRET);
     try {
         await jose.jwtVerify(token, signature)
+        return NextResponse.next()
         
     } catch (error) {
         return NextResponse.json({error: 'User is not authorized'},{status:500})
