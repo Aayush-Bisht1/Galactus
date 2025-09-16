@@ -11,7 +11,7 @@ def safe_read_csv(path, **kwargs):
         return None
 
 def generate_priority_df():
-    DATA_DIR = "../data"
+    DATA_DIR = "./data"
     PLANNING_TIME = pd.Timestamp("2025-09-01T21:00:00")
 
     fitness_df = safe_read_csv(os.path.join(DATA_DIR, "fitness_certificates.csv"))
@@ -309,4 +309,4 @@ def generate_priority_df():
         on='train_id',
         how='left'
     )
-    priority_df.to_csv("../data/priority_score.csv", index=False)
+    priority_df.to_csv(os.path.join(DATA_DIR, "priority_score.csv"), index=False)
