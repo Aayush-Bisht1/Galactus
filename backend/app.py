@@ -13,14 +13,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-'''
-@app.get("/api/ranked")
-def get_ranked(limit: int = 100):
-    if not os.path.exists(OUTPUT_CSV):
-        return {"data": []}
-    df = pd.read_csv(OUTPUT_CSV)
-    return {"count": len(df), "data": df.head(limit).to_dict(orient="records")}
-'''
+DATA_DIR = "./data"
 
 @app.post("/api/run-optimization")
 def run_optimization_post():
@@ -29,6 +22,6 @@ def run_optimization_post():
 
 @app.get("/api/run-optimization")
 def run_optimization_get(limit: int = 100):
-    ranked = pd.read_csv("../data/priority_score.csv")
+    ranked = pd.read_csv(os.path.join(DATA_DIR,"priority_score.csv"))
     return {"data": ranked.head(limit).to_dict(orient="records")}
 
