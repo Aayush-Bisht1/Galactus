@@ -1,6 +1,7 @@
 "use client"
 import { Button } from '@/components/ui/button'
 import { Menu, Train, X } from 'lucide-react'
+import Link from 'next/link';
 import React, { useState } from 'react'
 import MenuBtn from './MenuBtn'
 import Loginbtn from './Loginbtn'
@@ -45,6 +46,14 @@ function Header() {
           
             <Loginbtn/>
             
+            <Link href={'/login'}>
+            <Button
+              className="flex items-center bg-gradient-to-r from-[#0078B4] to-[#00A651] text-white hover:opacity-90 rounded-xl px-6"
+            >
+              Log In
+            </Button>
+            </Link>
+
           </div>
 
           {/* Mobile Menu Button */}
@@ -68,6 +77,15 @@ function Header() {
               ))}
 
                 <Loginbtn/>
+
+              <Link href={'/login'}>
+              <Button
+                className="flex items-center bg-gradient-to-r from-[#0078B4] to-[#00A651] text-white hover:opacity-90 rounded-xl mt-2"
+              >
+                Log In
+              </Button>
+              </Link>
+
             </div>
           </div>
         )}
