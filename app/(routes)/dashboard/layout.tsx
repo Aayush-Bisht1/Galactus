@@ -1,6 +1,6 @@
 import React from 'react'
-import Sidebar from '../_components/dashboard/Sidebar';
-import Navbar from '../_components/dashboard/Navbar';
+import Sidebar from '@/app/_components/Dashboard/Sidebar';
+import Navbar from '@/app/_components/Dashboard/Navbar';
 const layout = ({
   children,
 }: Readonly<{
