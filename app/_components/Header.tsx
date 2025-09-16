@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button'
 import { Menu, Train, X } from 'lucide-react'
 import Link from 'next/link';
 import React, { useState } from 'react'
-
+import MenuBtn from './MenuBtn'
+import Loginbtn from './Loginbtn'
+import Link from 'next/link'
 function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -33,13 +35,17 @@ function Header() {
             {navItems.map((item) => (
               <a href={item.href} key={item.label}
               >
-                <button
-                  className="text-[#0B2A3F]/80 hover:text-[#0078B4] transition-colors font-medium"
+                <div
+                  className="text-[#0B2A3F]/80 hover:text-[#0078B4] transition-colors font-medium" 
                 >
                   {item.label}
-                </button>
+                </div>
               </a>
             ))}
+            
+          
+            <Loginbtn/>
+            
             <Link href={'/login'}>
             <Button
               className="flex items-center bg-gradient-to-r from-[#0078B4] to-[#00A651] text-white hover:opacity-90 rounded-xl px-6"
@@ -47,15 +53,12 @@ function Header() {
               Log In
             </Button>
             </Link>
+
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 text-[#0B2A3F]"
-          >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <MenuBtn isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} /> 
+          
         </div>
 
         {/* Mobile Navigation */}
@@ -65,13 +68,16 @@ function Header() {
               {navItems.map((item) => (
                 <a href={item.href} key={item.label}
                 >
-                  <button
-                    className="text-left text-[#0B2A3F]/80 hover:text-[#0078B4] transition-colors font-medium py-2"
-                  >
-                    {item.label}
-                  </button>
+                  <div className="text-left text-[#0B2A3F]/80 hover:text-[#0078B4] transition-colors font-medium py-2">
+                    {
+                      item.label
+                    }
+                  </div>
                 </a>
               ))}
+
+                <Loginbtn/>
+
               <Link href={'/login'}>
               <Button
                 className="flex items-center bg-gradient-to-r from-[#0078B4] to-[#00A651] text-white hover:opacity-90 rounded-xl mt-2"
@@ -79,6 +85,7 @@ function Header() {
                 Log In
               </Button>
               </Link>
+
             </div>
           </div>
         )}

@@ -34,7 +34,7 @@ const ListItem = ({title,icon,path}:ListItemprops) => {
           isActive
             ? "bg-emerald-100 text-emerald-700 font-medium"
             : "text-slate-600 hover:bg-gray-100 hover:text-emerald-700"
-        }`}>
+        }`} prefetch={true}>
             <IconComponent className={`w-5 h-5 ${isActive ? "text-emerald-700" : "text-slate-500"}`}
 ></IconComponent>
             <span>

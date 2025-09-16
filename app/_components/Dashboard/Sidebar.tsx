@@ -2,8 +2,8 @@ import React from 'react'
 import ListItem from './ListItem';
 import {Home,ClipboardList,BarChart3,Wrench,Brush,Settings} from "lucide-react"
 const sidebarLinks = [
-  { title: "Dashboard", icon: "home" ,path:"/dashboard"},
-  { title: "Train Allocation", icon: "train",path:"/dashboard/allocation" },
+  { title: "Train Allocation", icon: "home" ,path:"/dashboard"},
+  { title: "Upload", icon: "upload",path:"/dashboard/upload"},
   { title: "Simulations", icon: "simulations",path:"/dashboard/simulations"},
   { title: "Maintenance", icon: "maintenance",path:"/dashboard/maintenance"},
   { title: "Cleaning", icon: "cleaning",path:"/dashboard/cleaning"},
