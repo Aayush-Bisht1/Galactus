@@ -9,7 +9,8 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState } from "react";
+import axios from "axios"
+import { useEffect, useState } from "react";
 
 const FileName = [
     "Maintainance CSV",
@@ -22,8 +23,15 @@ const FileName = [
 
 export function Form() {
     const [files, setFiles] = useState<(File | null)[]>(Array(6).fill(null));
+    const [user, setUser] = useState<any>(null);
 
-    console.log("Current files:", files);
+    useEffect(() => {
+        fetch("/api/auth/me")
+            .then(res => res.json())
+            .then(data => {
+                setUser(data)
+            });
+    }, []);
 
     const handleFileChange = (index: number, file: File | null) => {
         if (file) {
@@ -64,39 +72,61 @@ export function Form() {
             }
         });
 
+        try {
+            const res = await fetch("http://localhost:8000/api/run-optimization", {
+                method: "POST",
+                body: formData,
+            });
 
-        // try {
-        //     const res = await fetch("/api/upload", {
-        //         method: "POST",
-        //         body: formData,
-        //     });
+            if (res.ok) {
+                const result = await res.json();
+                function splitOrEmpty(str?: string) {
+                    return str ? str.split("|").map(s => s.trim()) : [];
+                }
+                const formattedData = result.results.map((r: any) => ({
+                    train_id: r.train_id,
+                    eligible: r.eligible,
+                    priority_score: r.priority_score,
+                    reasons: splitOrEmpty(r.reasons),
+                    recommendations: splitOrEmpty(r.recommendations),
+                }));
 
-        //     if (res.ok) {
-        //         const result = await res.json();
-        //         console.log("Upload successful:", result);
-        //         alert("CSV files uploaded successfully!");
-        //         // Reset form
-        //         setFiles(Array(6).fill(null));
-        //         // Clear all file inputs
-        //         files.forEach((_, index) => {
-        //             const input = document.getElementById(`csvFile${index}`) as HTMLInputElement;
-        //             if (input) input.value = "";
-        //         });
-        //     } else {
-        //         const errorText = await res.text();
-        //         console.error("Upload failed:", errorText);
-        //         alert(`Upload failed: ${res.status} ${res.statusText}`);
-        //     }
-        // } catch (error) {
-        //     console.error("Error uploading files:", error);
-        //     alert("Error uploading files. Please check your connection and try again.");
-        // }
+                const reqData = await axios.post("/api/result", {
+                    userId: user?.id,
+                    data: formattedData,
+                });
+
+                console.log(reqData);
+
+                const record = reqData.data.result;
+                console.log("Optimization successful:", record);
+                console.log(record);
+
+
+                alert("✅ Optimization completed successfully!");
+
+                // Reset form
+                setFiles(Array(6).fill(null));
+                // Clear all file inputs
+                files.forEach((_, index) => {
+                    const input = document.getElementById(`csvFile${index}`) as HTMLInputElement;
+                    if (input) input.value = "";
+                });
+            } else {
+                const errorData = await res.json();
+                console.error("Optimization failed:", errorData);
+                alert(`❌ Optimization failed: ${errorData.detail || res.statusText}`);
+            }
+        } catch (error) {
+            console.error("Error running optimization:", error);
+            alert("❌ Error running optimization. Please check your connection and try again.");
+        }
     };
 
     return (
         <Card className="w-full max-w-md mx-auto mt-6">
             <CardHeader>
-                <CardTitle>Upload your Train CSV data</CardTitle>
+                <CardTitle>Train Optimization System</CardTitle>
             </CardHeader>
             <form onSubmit={handleSubmit}>
                 <CardContent>
@@ -115,7 +145,7 @@ export function Form() {
                                 onChange={(e) =>
                                     handleFileChange(index, e.target.files?.[0] || null)
                                 }
-                                className="file:mr-4 file:px-4 file:py-1 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                             />
                             {file && (
                                 <p className="text-xs text-green-600 mt-1">

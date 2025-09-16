@@ -5,40 +5,85 @@ import numpy as np
 from datetime import datetime, timedelta
 
 def safe_read_csv(path, **kwargs):
+    """Safely read CSV file with error handling"""
     if os.path.exists(path):
-        return pd.read_csv(path, **kwargs)
+        try:
+            return pd.read_csv(path, **kwargs)
+        except Exception as e:
+            print(f"Error reading {path}: {str(e)}")
+            return None
     else:
+        print(f"File not found: {path}")
         return None
 
 def generate_priority_df():
-    DATA_DIR = "../data"
+    """Generate priority DataFrame from uploaded CSV files"""
+    
+    # Get the absolute path to the data directory
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    DATA_DIR = os.path.join(current_dir, "..", "data")
+    DATA_DIR = os.path.abspath(DATA_DIR)  # Convert to absolute path
+    
+    print(f"Looking for data files in: {DATA_DIR}")
+    
     PLANNING_TIME = pd.Timestamp("2025-09-01T21:00:00")
 
+    # Read CSV files with updated names
     fitness_df = safe_read_csv(os.path.join(DATA_DIR, "fitness_certificates.csv"))
     wo_df = safe_read_csv(os.path.join(DATA_DIR, "work_orders_maximo.csv"))
     branding_df = safe_read_csv(os.path.join(DATA_DIR, "branding_schedule.csv"))
     mileage_df = safe_read_csv(os.path.join(DATA_DIR, "mileage_logs.csv"))
     cleaning_df = safe_read_csv(os.path.join(DATA_DIR, "cleaning_schedule.csv"))
-    stabling_df = safe_read_csv(os.path.join(DATA_DIR, "stabling_layout.csv"))
-    cleaning_df_prev = safe_read_csv(os.path.join(DATA_DIR, "cleaning_schedule_prev.csv"))
     
+    # Optional files - create empty DataFrames if not present
+    stabling_df = safe_read_csv(os.path.join(DATA_DIR, "stabling_layout.csv"))
+    if stabling_df is None:
+        stabling_df = pd.DataFrame(columns=['train_id', 'position'])
+    
+    cleaning_df_prev = safe_read_csv(os.path.join(DATA_DIR, "cleaning_schedule_prev.csv"))
+    if cleaning_df_prev is None:
+        cleaning_df_prev = pd.DataFrame(columns=['train_id', 'scheduled_end', 'scheduled_start', 'cleaning_type', 'manpower_required'])
+
+    # Validate required files
+    required_files = {
+        'fitness_certificates.csv': fitness_df,
+        'work_orders_maximo.csv': wo_df,
+        'branding_schedule.csv': branding_df,
+        'mileage_logs.csv': mileage_df,
+        'cleaning_schedule.csv': cleaning_df
+    }
+    
+    missing_files = [name for name, df in required_files.items() if df is None]
+    if missing_files:
+        raise RuntimeError(f"Required files missing: {missing_files}")
+
+    # Collect all train IDs
     all_train_ids = set()
-    for df in [fitness_df, wo_df, branding_df, mileage_df, cleaning_df, stabling_df]:
-        if 'train_id' in df.columns:
+    for df_name, df in required_files.items():
+        if df is not None and 'train_id' in df.columns:
             all_train_ids.update(df['train_id'].dropna().unique())
+    
+    # Add train IDs from optional files
+    if stabling_df is not None and 'train_id' in stabling_df.columns:
+        all_train_ids.update(stabling_df['train_id'].dropna().unique())
 
     all_trains = sorted(list(all_train_ids))
     if len(all_trains) == 0:
-        raise RuntimeError("No train IDs found in provided files. Ensure `train_id` is present in your CSVs.")
+        raise RuntimeError("No train IDs found in provided files. Ensure `train_id` column is present in your CSVs.")
 
+    print(f"Found {len(all_trains)} unique train IDs")
     df = pd.DataFrame({"train_id": all_trains})
+
+    # Process fitness certificates
+    if not fitness_df.empty:
+        fitness_df['valid_to_dt'] = pd.to_datetime(fitness_df['valid_to'], errors='coerce')
+        fitness_min = fitness_df.groupby('train_id')['valid_to_dt'].min().reset_index().rename(columns={'valid_to_dt':'fitness_valid_till'})
+        df = df.merge(fitness_min, on='train_id', how='left')
+        df['fitness_days_left'] = (df['fitness_valid_till'] - PLANNING_TIME).dt.days
+    else:
+        df['fitness_days_left'] = 0
     
-
-    fitness_df['valid_to_dt'] = pd.to_datetime(fitness_df['valid_to'], errors='coerce')
-    fitness_min = fitness_df.groupby('train_id')['valid_to_dt'].min().reset_index().rename(columns={'valid_to_dt':'fitness_valid_till'})
-
-    df['fitness_days_left'] = (pd.to_datetime(fitness_min['fitness_valid_till']) - PLANNING_TIME).dt.days
-    df['fitness_days_left'] = df['fitness_days_left'].fillna(-9999).clip(lower=0)  # negative => expired
+    df['fitness_days_left'] = df['fitness_days_left'].fillna(-9999).clip(lower=0)
 
     def fitness_priority(days_left):
         if days_left < 0:
@@ -47,73 +92,94 @@ def generate_priority_df():
 
     df['fitness_priority_raw'] = df['fitness_days_left'].apply(fitness_priority)
 
-    wo_df['status_norm'] = wo_df['status'].str.lower().fillna('')
-    wo_open = wo_df[wo_df['status_norm'].str.contains('open', na=False)]
+    # Process work orders
+    if not wo_df.empty:
+        wo_df['status_norm'] = wo_df['status'].str.lower().fillna('')
+        wo_open = wo_df[wo_df['status_norm'].str.contains('open', na=False)]
 
-    open_counts = wo_open.groupby('train_id').size().rename('open_wo_count')
-    open_hours = wo_open.groupby('train_id')['estimated_hours'].sum(min_count=1).rename('open_wo_hours')
+        open_counts = wo_open.groupby('train_id').size().rename('open_wo_count')
+        open_hours = wo_open.groupby('train_id')['estimated_hours'].sum(min_count=1).rename('open_wo_hours')
 
-    wo_summary = pd.concat([open_counts, open_hours], axis=1).reset_index().fillna(0)
-    wo_summary['open_wo_count'] = wo_summary['open_wo_count'].astype(int)
-    wo_summary['open_wo_hours'] = wo_summary['open_wo_hours'].astype(float)
-    df = df.merge(wo_summary, on='train_id', how='left')
+        wo_summary = pd.concat([open_counts, open_hours], axis=1).reset_index().fillna(0)
+        wo_summary['open_wo_count'] = wo_summary['open_wo_count'].astype(int)
+        wo_summary['open_wo_hours'] = wo_summary['open_wo_hours'].astype(float)
+        df = df.merge(wo_summary, on='train_id', how='left')
+    
     df[['open_wo_count', 'open_wo_hours']] = df[['open_wo_count', 'open_wo_hours']].fillna(0)
 
-    branding_df['start_date_dt'] = pd.to_datetime(branding_df['start_date'], errors='coerce').dt.date
-    branding_df['end_date_dt'] = pd.to_datetime(branding_df['end_date'], errors='coerce').dt.date
-    today_date = PLANNING_TIME.date()
-    branding_df['active'] = (~branding_df['start_date_dt'].isna()) & (~branding_df['end_date_dt'].isna()) & (branding_df['start_date_dt'] <= today_date) & (branding_df['end_date_dt'] >= today_date)
-    active_brand = branding_df[branding_df['active']].copy()
-    brand_hours = active_brand.groupby('train_id')['required_exposure_hours_per_day'].sum().rename('branding_hours').reset_index()
-    df = df.merge(brand_hours, on='train_id', how='left')
+    # Process branding schedule
+    if not branding_df.empty:
+        branding_df['start_date_dt'] = pd.to_datetime(branding_df['start_date'], errors='coerce').dt.date
+        branding_df['end_date_dt'] = pd.to_datetime(branding_df['end_date'], errors='coerce').dt.date
+        today_date = PLANNING_TIME.date()
+        branding_df['active'] = (~branding_df['start_date_dt'].isna()) & (~branding_df['end_date_dt'].isna()) & (branding_df['start_date_dt'] <= today_date) & (branding_df['end_date_dt'] >= today_date)
+        active_brand = branding_df[branding_df['active']].copy()
+        brand_hours = active_brand.groupby('train_id')['required_exposure_hours_per_day'].sum().rename('branding_hours').reset_index()
+        df = df.merge(brand_hours, on='train_id', how='left')
+    
     df['branding_hours'] = df['branding_hours'].fillna(0).astype(float)
 
-    mileage_df['odometer_km'] = pd.to_numeric(mileage_df['odometer_km'], errors='coerce').fillna(0)
-    odom = mileage_df.sort_values('recorded_at').groupby('train_id').tail(1)[['train_id','odometer_km']].rename(columns={'odometer_km':'cumulative_km'})
-    delta = mileage_df.sort_values('recorded_at').groupby('train_id').tail(1)[['train_id','delta_km']]
-    df = df.merge(odom, on='train_id', how='left')
-    df = df.merge(delta, on='train_id', how='left')
+    # Process mileage logs
+    if not mileage_df.empty:
+        mileage_df['odometer_km'] = pd.to_numeric(mileage_df['odometer_km'], errors='coerce').fillna(0)
+        odom = mileage_df.sort_values('recorded_at').groupby('train_id').tail(1)[['train_id','odometer_km']].rename(columns={'odometer_km':'cumulative_km'})
+        if 'delta_km' in mileage_df.columns:
+            delta = mileage_df.sort_values('recorded_at').groupby('train_id').tail(1)[['train_id','delta_km']]
+            df = df.merge(delta, on='train_id', how='left')
+        df = df.merge(odom, on='train_id', how='left')
+    
     df['cumulative_km'] = pd.to_numeric(df['cumulative_km'].fillna(0), errors='coerce').astype(float)
     df['delta_km'] = pd.to_numeric(df['delta_km'].fillna(0), errors='coerce').astype(float)
 
-
-    cleaning_df_prev['scheduled_end_dt'] = pd.to_datetime(cleaning_df_prev['scheduled_end'], errors='coerce')
-    cleaning_df_prev['scheduled_start_dt'] = pd.to_datetime(cleaning_df_prev['scheduled_start'], errors='coerce')
-    last_clean = cleaning_df_prev.sort_values('scheduled_end_dt').groupby('train_id').tail(1)[['train_id','scheduled_end_dt','scheduled_start_dt','cleaning_type','manpower_required']].copy()
-    last_clean = last_clean.rename(columns={'scheduled_end_dt':'last_clean_end','scheduled_start_dt':'last_clean_start','type':'last_clean_type','manpower_required':'last_clean_manpower'})
-
-    df['clean_age_hours'] = (PLANNING_TIME - pd.to_datetime(last_clean['last_clean_end'])).dt.total_seconds() / 3600.0
+    # Process previous cleaning schedule
+    if not cleaning_df_prev.empty:
+        cleaning_df_prev['scheduled_end_dt'] = pd.to_datetime(cleaning_df_prev['scheduled_end'], errors='coerce')
+        cleaning_df_prev['scheduled_start_dt'] = pd.to_datetime(cleaning_df_prev['scheduled_start'], errors='coerce')
+        last_clean = cleaning_df_prev.sort_values('scheduled_end_dt').groupby('train_id').tail(1)[['train_id','scheduled_end_dt','scheduled_start_dt','cleaning_type','manpower_required']].copy()
+        last_clean = last_clean.rename(columns={'scheduled_end_dt':'last_clean_end','scheduled_start_dt':'last_clean_start','cleaning_type':'last_clean_type','manpower_required':'last_clean_manpower'})
+        df = df.merge(last_clean[['train_id', 'last_clean_end']], on='train_id', how='left')
+        df['clean_age_hours'] = (PLANNING_TIME - df['last_clean_end']).dt.total_seconds() / 3600.0
+    else:
+        df['clean_age_hours'] = 99999.0
+    
     df['clean_age_hours'] = df['clean_age_hours'].fillna(99999.0)
     df['clean_freshness_raw'] = (1.0 - (np.minimum(df['clean_age_hours'], 72.0) / 72.0)).clip(0.0, 1.0)
 
+    # Process current cleaning schedule
     type_duration_mins = {
         'daily': 15,
         'outside_cleaning': 120,
         'heavy': 180
     }
-    start_window = PLANNING_TIME
-    end_window = PLANNING_TIME + pd.Timedelta(hours=24)
-    cleaning_df['scheduled_start_dt'] = pd.to_datetime(cleaning_df['scheduled_start'], errors='coerce')
-    cleaning_df['scheduled_end_dt'] = pd.to_datetime(cleaning_df['scheduled_end'], errors='coerce')
-    mask_window = (cleaning_df['scheduled_start_dt'] >= start_window) & (cleaning_df['scheduled_start_dt'] < end_window)
-    today_jobs = cleaning_df[mask_window].copy()
+    
+    if not cleaning_df.empty:
+        start_window = PLANNING_TIME
+        end_window = PLANNING_TIME + pd.Timedelta(hours=24)
+        cleaning_df['scheduled_start_dt'] = pd.to_datetime(cleaning_df['scheduled_start'], errors='coerce')
+        cleaning_df['scheduled_end_dt'] = pd.to_datetime(cleaning_df['scheduled_end'], errors='coerce')
+        mask_window = (cleaning_df['scheduled_start_dt'] >= start_window) & (cleaning_df['scheduled_start_dt'] < end_window)
+        today_jobs = cleaning_df[mask_window].copy()
 
-    def duration_hours(row):
-        t = str(row.get('cleaning_type', '')).lower().strip()
-        t = t.replace(' ', '_')         
-        mins = type_duration_mins.get(t, type_duration_mins['daily'])
-        return float(mins) / 60.0
+        def duration_hours(row):
+            t = str(row.get('cleaning_type', '')).lower().strip()
+            t = t.replace(' ', '_')         
+            mins = type_duration_mins.get(t, type_duration_mins['daily'])
+            return float(mins) / 60.0
 
-    if not today_jobs.empty:
-        today_jobs['duration_hours'] = today_jobs.apply(duration_hours, axis=1)
-        today_jobs['manpower_required'] = pd.to_numeric(today_jobs['manpower_required'], errors='coerce').fillna(0.0)
-        today_jobs['load'] = today_jobs['duration_hours'] * today_jobs['manpower_required']
-        load_by_train = today_jobs.groupby('train_id')['load'].sum().rename('today_clean_load').reset_index()
+        if not today_jobs.empty:
+            today_jobs['duration_hours'] = today_jobs.apply(duration_hours, axis=1)
+            today_jobs['manpower_required'] = pd.to_numeric(today_jobs['manpower_required'], errors='coerce').fillna(0.0)
+            today_jobs['load'] = today_jobs['duration_hours'] * today_jobs['manpower_required']
+            load_by_train = today_jobs.groupby('train_id')['load'].sum().rename('today_clean_load').reset_index()
+        else:
+            load_by_train = pd.DataFrame(columns=['train_id','today_clean_load'])
     else:
         load_by_train = pd.DataFrame(columns=['train_id','today_clean_load'])
 
     df = df.merge(load_by_train, on='train_id', how='left')
     df['today_clean_load'] = df['today_clean_load'].fillna(0.0)
+
+    # Process stabling layout
     def parse_position(position):
         if pd.isna(position):
             return (None, None)
@@ -127,16 +193,19 @@ def generate_priority_df():
 
         return (pid, None)
 
-    pos_map = stabling_df[['train_id','position']].dropna()
+    if not stabling_df.empty:
+        pos_map = stabling_df[['train_id','position']].dropna()
+        pos_map['parsed'] = pos_map['position'].apply(parse_position)
+        pos_map[['line_id','slot_idx']] = pd.DataFrame(pos_map['parsed'].tolist(), index=pos_map.index)
+        df = df.merge(pos_map[['train_id','position','line_id','slot_idx']], on='train_id', how='left')
+    else:
+        df['position'] = df['train_id']  # Use train_id as position if no stabling data
+        df['line_id'] = 'default_line'
+        df['slot_idx'] = None
 
-    map
-    pos_map['parsed'] = pos_map['position'].apply(parse_position)
-    pos_map[['line_id','slot_idx']] = pd.DataFrame(pos_map['parsed'].tolist(), index=pos_map.index)
-    df = df.merge(pos_map[['train_id','position','line_id','slot_idx']], on='train_id', how='left')
-
+    # Assign slots by group
     def assign_slots_by_group(g):
         if g['slot_idx'].notna().any():
-            # fill missing slot_idx by first available small integers not used
             used = set([int(x) for x in g['slot_idx'].dropna().astype(int).tolist()])
             next_slot = 0
             res = []
@@ -155,8 +224,7 @@ def generate_priority_df():
         return g
 
     group_key = 'line_id' if 'line_id' in df.columns and df['line_id'].notna().any() else 'position'
-    df[group_key] = df[group_key].fillna(df['position'])
-    df[group_key] = df[group_key].fillna(df['train_id'])
+    df[group_key] = df[group_key].fillna(df.get('position', df['train_id']))
 
     assigned = df.groupby(group_key, group_keys=False).apply(assign_slots_by_group).reset_index(drop=True)
     if 'slot_idx_assigned' in assigned.columns:
@@ -166,19 +234,19 @@ def generate_priority_df():
     df = assigned
 
     max_depth = max(1, int(df['shunt_depth'].max()))
-    df.drop('position', axis=1, inplace=True)
+    if 'position' in df.columns:
+        df.drop('position', axis=1, inplace=True)
 
-
-    REQUIRED_RAKES = 12
+    # Constants for scoring
     SHUNT_LAMBDA = 0.25
     W_FITNESS = 0.15
     W_JOB = 0.20
     W_BRANDING = 0.25
     W_MILEAGE = 0.25
     W_CLEAN = 0.15
-    OUTPUT_PATH = os.path.join(DATA_DIR, "ranked_induction.csv")
-
+    
     CLEAN_UPCOMING_ALPHA = 0.8
+
     def minmax_col(s):
         s2 = s.copy().astype(float)
         if s2.isna().all():
@@ -189,13 +257,10 @@ def generate_priority_df():
         return (s2 - lo) / (hi - lo)
 
     def compute_scores(df):
-
         feature_scores = pd.DataFrame({'train_id': df['train_id']})
 
         feature_scores['fitness_score'] = minmax_col(df['fitness_priority_raw'])
-
         feature_scores['job_score'] = 1.0 - minmax_col(df['open_wo_hours'].astype(float))
-
         feature_scores['branding_score'] = minmax_col(df['branding_hours'].astype(float))
 
         km = df['cumulative_km'].astype(float)
@@ -207,25 +272,10 @@ def generate_priority_df():
         df['cleaning_score_raw'] = df['clean_freshness_raw'] * (1.0 - CLEAN_UPCOMING_ALPHA * df['clean_today_penalty'])
         df['cleaning_score_raw'] = df['cleaning_score_raw'].clip(0.0, 1.0)
         df['clean_freshness'] = minmax_col(df['clean_freshness_raw'])
-        df['clean_today_penalty_norm'] = df['clean_today_penalty']  # already 0..1
+        df['clean_today_penalty_norm'] = df['clean_today_penalty']
         df['cleaning_score'] = minmax_col(df['cleaning_score_raw'])
-        out = df[['train_id',
-                          'clean_age_hours',
-                          'clean_freshness_raw','clean_freshness',
-                          'today_clean_load','clean_today_penalty_norm',
-                          'cleaning_score_raw','cleaning_score']].copy()
-        out = out.rename(columns={
-            'clean_today_penalty_norm': 'clean_today_penalty'
-        })
-        out = df[['train_id']].merge(out, on='train_id', how='left')
-        out['clean_age_hours'] = out['clean_age_hours'].fillna(99999.0)
-        out['clean_freshness_raw'] = out['clean_freshness_raw'].fillna(0.0)
-        out['clean_freshness'] = out['clean_freshness'].fillna(0.0)
-        out['today_clean_load'] = out['today_clean_load'].fillna(0.0)
-        out['clean_today_penalty'] = out['clean_today_penalty'].fillna(0.0)
-        out['cleaning_score_raw'] = out['cleaning_score_raw'].fillna(0.0)
-        out['cleaning_score'] = out['cleaning_score'].fillna(0.0)
-        feature_scores = feature_scores.merge(out[['train_id', 'cleaning_score']], on='train_id', how='left')
+        
+        feature_scores = feature_scores.merge(df[['train_id', 'cleaning_score']], on='train_id', how='left')
 
         df['S'] = df['shunt_depth'].astype(float) / float(max_depth)
         feature_scores['shunt_penalty'] = df['S']
@@ -240,7 +290,6 @@ def generate_priority_df():
 
         df['priority_score'] = minmax_col(df['priority_score'])
 
-
         return df, feature_scores
 
     def rank_trains(df):
@@ -248,57 +297,56 @@ def generate_priority_df():
         df['eligible'] = (df['fitness_days_left'] > 0) & (df['open_wo_hours'] <= 0)
         df = df.sort_values(
             by=['eligible', 'priority_score'],
-            ascending=[False, False]  # eligible=True first, then highest score first
+            ascending=[False, False]
         ).reset_index(drop=True)
         return df, feature_scores
 
     priority_df, feature_scores = rank_trains(df)
 
+    # Generate reasons for ranking
     avg_fitness_days = df['fitness_days_left'].mean()
     avg_branding_hours = df['branding_hours'].mean()
     avg_delta_km = df['delta_km'].mean()
     avg_clean_age = df['clean_age_hours'].mean()
     avg_clean_load = df['today_clean_load'].mean()
-    median_position = df['slot_idx'].median()
+    median_position = df['slot_idx'].median() if 'slot_idx' in df.columns else 0
 
     def get_comparative_reasons(row):
         reasons = []
 
         if row['fitness_days_left'] <= 0:
-            reasons.append(f"-Expired fitness certificate")
-        elif row['fitness_days_left'] > avg_fitness_days * 1.1:  # 10% threshold
-            reasons.append(f"+Fitness: High days left ({row['fitness_days_left']} vs. avg {avg_fitness_days:.1f})")
+            reasons.append("-Expired fitness certificate")
+        elif row['fitness_days_left'] > avg_fitness_days * 1.1:
+            reasons.append(f"+Fitness: High days left ({row['fitness_days_left']:.1f} vs. avg {avg_fitness_days:.1f})")
         elif row['fitness_days_left'] < avg_fitness_days * 0.9:
-            reasons.append(f"-Fitness: Low days left ({row['fitness_days_left']} vs. avg {avg_fitness_days:.1f})")
+            reasons.append(f"-Fitness: Low days left ({row['fitness_days_left']:.1f} vs. avg {avg_fitness_days:.1f})")
 
         if row['open_wo_count'] > 0:
-            wo = wo_df[wo_df['train_id'] == row['train_id']]
-            if not wo.empty:
-                job = wo.iloc[0]['asset']
-                estimated_hours = wo.iloc[0]['estimated_hours']
-                reasons.append(f"Ineligible: Open work order on {job} ({estimated_hours} hrs approx.)")
+            reasons.append(f"Ineligible: Open work orders ({row['open_wo_hours']:.1f} hrs estimated)")
 
         if row['branding_hours'] > avg_branding_hours * 1.1:
-            reasons.append(f"+Branding: High exposure hours ({row['branding_hours']} vs. avg {avg_branding_hours:.1f})")
+            reasons.append(f"+Branding: High exposure hours ({row['branding_hours']:.1f} vs. avg {avg_branding_hours:.1f})")
         elif row['branding_hours'] < avg_branding_hours * 0.9:
-            reasons.append(f"-Branding: Low exposure hours ({row['branding_hours']} vs. avg {avg_branding_hours:.1f})")
+            reasons.append(f"-Branding: Low exposure hours ({row['branding_hours']:.1f} vs. avg {avg_branding_hours:.1f})")
 
         if row['delta_km'] > avg_delta_km * 1.1:
-            reasons.append(f"-Mileage: High traveled distance ({row['delta_km']} km vs. avg {avg_delta_km:.1f})")
+            reasons.append(f"-Mileage: High traveled distance ({row['delta_km']:.1f} km vs. avg {avg_delta_km:.1f})")
         elif row['delta_km'] < avg_delta_km * 0.9:
-            reasons.append(f"+Mileage: Low traveled distance ({row['delta_km']} km vs. avg {avg_delta_km:.1f})")
+            reasons.append(f"+Mileage: Low traveled distance ({row['delta_km']:.1f} km vs. avg {avg_delta_km:.1f})")
 
         if row['clean_age_hours'] < avg_clean_age * 0.9:
             reasons.append(f"+Cleaning: Recently cleaned ({row['clean_age_hours']:.1f} hrs ago vs. avg {avg_clean_age:.1f})")
         elif row['clean_age_hours'] > avg_clean_age * 1.1:
             reasons.append(f"-Cleaning: Long since last clean ({row['clean_age_hours']:.1f} hrs ago vs. avg {avg_clean_age:.1f})")
+        
         if row['today_clean_load'] > avg_clean_load * 1.1:
             reasons.append(f"-Cleaning: High load today ({row['today_clean_load']:.1f} hrs vs. avg {avg_clean_load:.1f})")
 
-        if row['slot_idx'] < median_position:
-            reasons.append(f"+Stabling: Forward position on stabling line - minimal shunting")
-        elif row['slot_idx'] > median_position:
-            reasons.append(f"-Stabling: Rear position on stabling line - high shunting")
+        if 'slot_idx' in row and pd.notna(row['slot_idx']):
+            if row['slot_idx'] < median_position:
+                reasons.append("+Stabling: Forward position on stabling line - minimal shunting")
+            elif row['slot_idx'] > median_position:
+                reasons.append("-Stabling: Rear position on stabling line - high shunting")
 
         return " | ".join(reasons) if reasons else "Balanced across features"
 
@@ -309,4 +357,10 @@ def generate_priority_df():
         on='train_id',
         how='left'
     )
-    priority_df.to_csv("../data/priority_score.csv", index=False)
+    
+    # Save to output file
+    output_path = os.path.join(DATA_DIR, "priority_score.csv")
+    priority_df.to_csv(output_path, index=False)
+    print(f"Priority scores saved to: {output_path}")
+    
+    return priority_df
