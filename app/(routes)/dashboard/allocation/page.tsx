@@ -1,16 +1,44 @@
-import React from "react";
+"use client";
+import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle2, PauseCircle, Wrench } from "lucide-react";
+import { CheckCircle2, PauseCircle, Wrench, RefreshCw, Clock, Droplets, Settings, AlertTriangle } from "lucide-react";
 
-const trainData = [
-  { id: "Train 101", status: "Ready" },
-  { id: "Train 102", status: "Standby" },
-  { id: "Train 103", status: "Maintenance" },
-  { id: "Train 104", status: "Ready" },
-  { id: "Train 105", status: "Standby" },
-];
+export type Cleaning= {
+  last_clean_end: string;
+  clean_age_hours: number;
+  today_clean_load: number;
+}
+
+export type Maintenance= {
+  open_work_orders: number;
+  open_work_order_hours: number;
+  _id: string;
+}
+
+export type TrainData= {
+  train_id: string;
+  eligible: boolean;
+  priority_score: number;
+  status: string;
+  fitness_days_left: number;
+  reasons: string[];
+  recommendations: string[];
+  cleaning: Cleaning;
+  maintenance: Maintenance;
+}
+
+export type Allocation= {
+  _id: string;
+  userId: string;
+  data: TrainData[];
+  statusSummary: {
+    Ready: number;
+    Standby: number;
+    Maintenance: number;
+  };
+}
 
 const statusIcon = {
   Ready: <CheckCircle2 className="text-green-600 w-5 h-5" />,
@@ -19,6 +47,32 @@ const statusIcon = {
 };
 
 const TrainAllocationPage = () => {
+  const [allocation, setAllocation] = useState<Allocation | null>(null);
+  console.log(allocation);
+
+  useEffect(() => {
+    async function fetchData() {
+      const res = await fetch("/api/dashboard");
+      const json = await res.json();
+      setAllocation(json);
+    }
+    fetchData();
+  }, []);
+
+
+  if (!allocation) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex justify-center items-center py-20">
+          <div className="text-center space-y-4">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-teal-600" />
+            <p className="text-lg">Loading train allocation data...</p>
+            <p className="text-sm text-gray-600">This may take a few moments</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -33,7 +87,7 @@ const TrainAllocationPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">18</p>
+            <p className="text-2xl font-bold">{allocation.statusSummary.Ready}</p>
           </CardContent>
         </Card>
 
@@ -44,7 +98,7 @@ const TrainAllocationPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">4</p>
+            <p className="text-2xl font-bold">{allocation.statusSummary.Standby}</p>
           </CardContent>
         </Card>
 
@@ -55,7 +109,7 @@ const TrainAllocationPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">3</p>
+            <p className="text-2xl font-bold">{allocation.statusSummary.Maintenance}</p>
           </CardContent>
         </Card>
       </div>
@@ -75,9 +129,9 @@ const TrainAllocationPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {trainData.map((train) => (
-                <TableRow key={train.id}>
-                  <TableCell>{train.id}</TableCell>
+              {allocation.data.map((train) => (
+                <TableRow key={train.train_id}>
+                  <TableCell>Train {train.train_id}</TableCell>
                   <TableCell className="flex items-center gap-2">
                     {statusIcon[train.status as keyof typeof statusIcon]} {train.status}
                   </TableCell>

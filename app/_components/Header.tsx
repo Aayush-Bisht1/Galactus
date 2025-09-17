@@ -5,7 +5,6 @@ import Link from 'next/link';
 import React, { useState } from 'react'
 import MenuBtn from './MenuBtn'
 import Loginbtn from './Loginbtn'
-import Link from 'next/link'
 function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 

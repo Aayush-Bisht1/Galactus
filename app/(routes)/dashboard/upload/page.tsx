@@ -1,4 +1,4 @@
-import { Form } from '@/app/_components/Form'
+import Form from '@/app/_components/Form'
 import React from 'react'
 
 const Upload = () => {

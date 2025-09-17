@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
         const alg = "HS256"
         const signature = new TextEncoder().encode(process.env.JWT_SECRET)
-        const token = await new jose.SignJWT({ email: user.email, id: user._id.toString() })
+        const token = await new jose.SignJWT({ email: user.email, id: user._id.toString(), username: user.username })
             .setProtectedHeader({ alg })
             .setExpirationTime("7d")
             .sign(signature)
