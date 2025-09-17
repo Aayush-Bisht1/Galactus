@@ -30,18 +30,20 @@ const TableCell = ({ children, className = "" }: { children: React.ReactNode; cl
 );
 
 // Input component
-const Input = ({ type = "text", placeholder, value, onChange, className = "" }: {
+const Input = ({ type = "text", placeholder, value, onChange, className = "", step }: {
   type?: string;
   placeholder?: string;
   value: string | number;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   className?: string;
+  step?: string | number;
 }) => (
   <input
     type={type}
     placeholder={placeholder}
     value={value}
     onChange={onChange}
+    step={step}
     className={`px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${className}`}
   />
 );
@@ -123,7 +125,7 @@ const SimulationPage = () => {
   const [loading, setLoading] = useState(true);
   const [simulating, setSimulating] = useState(false);
   const [results, setResults] = useState<SimulationResult[]>([]);
-  
+
   const [parameters, setParameters] = useState<SimulationParameters>({
     scenario: "current",
     demandIncrease: 0,
@@ -146,25 +148,25 @@ const SimulationPage = () => {
         setLoading(false);
       }
     }
-    
+
     fetchData();
   }, []);
 
   const runSimulation = async () => {
     if (!allocationData) return;
-    
+
     setSimulating(true);
-    
+
     // Simulate processing delay
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     const baseData = allocationData.data;
     const currentReady = baseData.filter(t => t.status === "Ready").length;
     const currentMaintenance = baseData.filter(t => t.status === "Maintenance").length;
     const currentStandby = baseData.length - currentReady - currentMaintenance;
-    
+
     const scenarios: SimulationResult[] = [];
-    
+
     // Current State Scenario
     scenarios.push({
       scenario: "Current State",
@@ -181,7 +183,7 @@ const SimulationPage = () => {
     const peakDemand = Math.floor(currentReady * parameters.peakHoursMultiplier);
     const peakShortfall = Math.max(0, peakDemand - currentReady);
     const peakAvailableFromStandby = Math.min(peakShortfall, currentStandby);
-    
+
     scenarios.push({
       scenario: "Peak Hours Demand",
       ready: currentReady + peakAvailableFromStandby,
@@ -189,7 +191,7 @@ const SimulationPage = () => {
       maintenance: currentMaintenance,
       totalAvailable: currentReady + currentStandby,
       efficiency: ((currentReady + peakAvailableFromStandby) / peakDemand) * 100,
-      recommendations: peakShortfall > peakAvailableFromStandby ? 
+      recommendations: peakShortfall > peakAvailableFromStandby ?
         ["Consider reducing maintenance window during peak hours", "Optimize cleaning schedules"] :
         ["Current capacity adequate for peak demand"],
       impacts: { cleaning: 10, maintenance: -5, allocation: 15 }
@@ -200,7 +202,7 @@ const SimulationPage = () => {
     const improvedMaintenance = currentMaintenance - maintenanceImprovement;
     const improvedReady = currentReady + Math.floor(maintenanceImprovement * 0.7);
     const improvedStandby = currentStandby + Math.floor(maintenanceImprovement * 0.3);
-    
+
     scenarios.push({
       scenario: `${parameters.maintenanceReduction}% Maintenance Reduction`,
       ready: improvedReady,
@@ -219,9 +221,9 @@ const SimulationPage = () => {
     // Enhanced Cleaning Efficiency Scenario
     const cleaningImprovement = Math.floor(baseData.length * (parameters.cleaningEfficiency / 100));
     const cleaningReady = Math.min(baseData.length, currentReady + Math.floor(cleaningImprovement * 0.5));
-    const cleaningStandby = Math.min(baseData.length - cleaningReady - currentMaintenance, 
-                                   currentStandby + Math.floor(cleaningImprovement * 0.5));
-    
+    const cleaningStandby = Math.min(baseData.length - cleaningReady - currentMaintenance,
+      currentStandby + Math.floor(cleaningImprovement * 0.5));
+
     scenarios.push({
       scenario: `${parameters.cleaningEfficiency}% Cleaning Efficiency`,
       ready: cleaningReady,
@@ -241,7 +243,7 @@ const SimulationPage = () => {
     const emergencyTrainsDown = Math.floor(baseData.length * 0.15); // 15% emergency outage
     const emergencyReady = Math.max(0, currentReady - emergencyTrainsDown);
     const emergencyMaintenance = currentMaintenance + emergencyTrainsDown;
-    
+
     scenarios.push({
       scenario: "Emergency Response (15% Outage)",
       ready: emergencyReady,
@@ -260,11 +262,11 @@ const SimulationPage = () => {
     // Optimized Scenario (combining improvements)
     const optimizedMaintenanceReduction = Math.floor(currentMaintenance * 0.2);
     const optimizedFromCleaning = Math.floor(baseData.length * 0.1);
-    const optimizedReady = Math.min(baseData.length * 0.8, 
-                                  currentReady + optimizedMaintenanceReduction + optimizedFromCleaning);
+    const optimizedReady = Math.min(baseData.length * 0.8,
+      currentReady + optimizedMaintenanceReduction + optimizedFromCleaning);
     const optimizedMaintenance = Math.max(2, currentMaintenance - optimizedMaintenanceReduction);
     const optimizedStandby = baseData.length - optimizedReady - optimizedMaintenance;
-    
+
     scenarios.push({
       scenario: "Fully Optimized Operations",
       ready: optimizedReady,
@@ -383,57 +385,57 @@ const SimulationPage = () => {
               <Input
                 type="number"
                 value={parameters.demandIncrease}
-                onChange={(e) => setParameters({...parameters, demandIncrease: Number(e.target.value)})}
+                onChange={(e) => setParameters({ ...parameters, demandIncrease: Number(e.target.value) })}
                 placeholder="0"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1">Maintenance Reduction (%)</label>
               <Input
                 type="number"
                 value={parameters.maintenanceReduction}
-                onChange={(e) => setParameters({...parameters, maintenanceReduction: Number(e.target.value)})}
+                onChange={(e) => setParameters({ ...parameters, maintenanceReduction: Number(e.target.value) })}
                 placeholder="0"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1">Cleaning Efficiency Gain (%)</label>
               <Input
                 type="number"
                 value={parameters.cleaningEfficiency}
-                onChange={(e) => setParameters({...parameters, cleaningEfficiency: Number(e.target.value)})}
+                onChange={(e) => setParameters({ ...parameters, cleaningEfficiency: Number(e.target.value) })}
                 placeholder="0"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1">Emergency Reserve (%)</label>
               <Input
                 type="number"
                 value={parameters.emergencyReserve}
-                onChange={(e) => setParameters({...parameters, emergencyReserve: Number(e.target.value)})}
+                onChange={(e) => setParameters({ ...parameters, emergencyReserve: Number(e.target.value) })}
                 placeholder="10"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1">Peak Hours Multiplier</label>
               <Input
                 type="number"
                 step="0.1"
                 value={parameters.peakHoursMultiplier}
-                onChange={(e) => setParameters({...parameters, peakHoursMultiplier: Number(e.target.value)})}
+                onChange={(e) => setParameters({ ...parameters, peakHoursMultiplier: Number(e.target.value) })}
                 placeholder="1.2"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium mb-1">Scenario Type</label>
               <Select
                 value={parameters.scenario}
-                onChange={(e) => setParameters({...parameters, scenario: e.target.value})}
+                onChange={(e) => setParameters({ ...parameters, scenario: e.target.value })}
               >
                 <option value="current">Current State</option>
                 <option value="optimistic">Optimistic</option>
@@ -442,9 +444,9 @@ const SimulationPage = () => {
               </Select>
             </div>
           </div>
-          
+
           <div className="flex space-x-4 pt-4">
-            <Button 
+            <Button
               onClick={runSimulation}
               disabled={simulating}
               className="bg-teal-600 text-white px-6 hover:bg-teal-700 flex items-center gap-2"
@@ -452,10 +454,10 @@ const SimulationPage = () => {
               {simulating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <PlayCircle className="w-4 h-4" />}
               {simulating ? "Running Simulation..." : "Run Simulation"}
             </Button>
-            
-            <Button 
+
+            <Button
               onClick={resetSimulation}
-              variant="outline" 
+              variant="outline"
               className="px-6 flex items-center gap-2"
             >
               <RotateCcw className="w-4 h-4" />
@@ -589,18 +591,18 @@ const SimulationPage = () => {
                         {Math.max(...results.map(r => r.efficiency)).toFixed(1)}%
                       </span>
                     </div>
-                    
+
                     <div className="flex justify-between items-center p-3 bg-blue-50 rounded">
                       <span className="text-sm font-medium">Max Available Trains</span>
                       <span className="text-blue-600 font-bold">
                         {Math.max(...results.map(r => r.totalAvailable))}
                       </span>
                     </div>
-                    
+
                     <div className="flex justify-between items-center p-3 bg-yellow-50 rounded">
                       <span className="text-sm font-medium">Optimal Scenario</span>
                       <span className="text-yellow-600 font-bold text-sm">
-                        {results.reduce((best, current) => 
+                        {results.reduce((best, current) =>
                           current.efficiency > best.efficiency ? current : best
                         ).scenario}
                       </span>
