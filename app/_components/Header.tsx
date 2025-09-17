@@ -4,7 +4,6 @@ import { Menu, Train, X } from 'lucide-react'
 import Link from 'next/link';
 import React, { useState } from 'react'
 import MenuBtn from './MenuBtn'
-import Loginbtn from './Loginbtn'
 function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -42,9 +41,7 @@ function Header() {
               </a>
             ))}
             
-          
-            <Loginbtn/>
-            
+                      
             <Link href={'/login'}>
             <Button
               className="flex items-center bg-gradient-to-r from-[#0078B4] to-[#00A651] text-white hover:opacity-90 rounded-xl px-6"
@@ -74,8 +71,6 @@ function Header() {
                   </div>
                 </a>
               ))}
-
-                <Loginbtn/>
 
               <Link href={'/login'}>
               <Button
